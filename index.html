@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Готовность к программе · СкалоКлуб</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: одна колонка 720px, карточка вопроса как лист блэкбука; прогресс — закрашенная полоса-«тег» сверху */
+:root{
+  --bg:#f2f3f0; --paper:#ffffff; --fg:#161a18; --mute:#5f6763; --line:#d8dbd6;
+  --accent:#1f35c7; --accent-fg:#ffffff; --mark:#f2c94c;
+  --ok:#1f8a4c; --ok-bg:#e3f3e8; --warn:#b26a00; --warn-bg:#fbf0d9; --bad:#c2321f; --bad-bg:#fae4df;
+  --display:"Unbounded",system-ui,sans-serif; --body:"Golos Text",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141716; --paper:#1d2120; --fg:#e8eae6; --mute:#9aa29d; --line:#333937;
+  --accent:#8a97ff; --accent-fg:#0f1230; --mark:#e0b63a;
+  --ok:#5fcf8a; --ok-bg:#1b3326; --warn:#f0b64a; --warn-bg:#3a2d12; --bad:#ff7d68; --bad-bg:#3d1c17;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#141716; --paper:#1d2120; --fg:#e8eae6; --mute:#9aa29d; --line:#333937;
+  --accent:#8a97ff; --accent-fg:#0f1230; --mark:#e0b63a;
+  --ok:#5fcf8a; --ok-bg:#1b3326; --warn:#f0b64a; --warn-bg:#3a2d12; --bad:#ff7d68; --bad-bg:#3d1c17;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:720px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;padding-block:28px 20px;border-bottom:2px solid var(--fg)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(20px,4vw,28px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.meta{color:var(--mute);font-size:13px}
+nav{display:flex;gap:8px;flex-wrap:wrap;padding-block:14px}
+nav button{font:inherit;font-size:14px;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+nav button[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+h2{font-family:var(--display);font-weight:500;font-size:18px;margin:24px 0 8px}
+p{margin:0 0 12px;max-width:62ch}
+.lead{color:var(--mute)}
+label{display:block;font-size:13px;font-weight:600;color:var(--mute);letter-spacing:.04em;text-transform:uppercase;margin:16px 0 6px}
+input[type=text]{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--fg)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);font-weight:600}
+.tests{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:20px}
+.test{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.test h3{font-family:var(--display);font-weight:500;font-size:16px;margin:0}
+.test .n{color:var(--mute);font-size:13px}
+.btn{font:inherit;font-weight:600;padding:12px 18px;border-radius:8px;border:none;background:var(--accent);color:var(--accent-fg);cursor:pointer;margin-top:auto}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible,.seg button:focus-visible,.opt:focus-visible,nav button:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.progress{height:10px;background:var(--line);border-radius:5px;margin:20px 0 6px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--mark);width:0;transition:width .3s}
+.pos{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px;margin-top:12px}
+.block{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.q{font-size:18px;font-weight:600;line-height:1.4;margin:0 0 16px;text-wrap:balance}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{font:inherit;text-align:left;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;line-height:1.4}
+.opt:hover{border-color:var(--fg)}
+.opt[disabled]{cursor:default}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.explain{margin-top:14px;padding:12px 14px;border-left:3px solid var(--accent);background:var(--bg);border-radius:0 8px 8px 0;font-size:15px}
+.explain b{display:block;margin-bottom:4px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.score{font-family:var(--display);font-size:clamp(40px,10vw,64px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.verdict{display:inline-block;padding:6px 12px;border-radius:999px;font-weight:600;margin:8px 0 16px}
+.v-ok{background:var(--ok-bg);color:var(--ok)} .v-warn{background:var(--warn-bg);color:var(--warn)} .v-bad{background:var(--bad-bg);color:var(--bad)}
+.blocks{display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center;font-size:15px;margin-top:8px}
+.blocks .bar{grid-column:1/-1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.blocks .bar i{display:block;height:100%}
+.blocks .pct{font-variant-numeric:tabular-nums;color:var(--mute)}
+.wrong{margin-top:16px}
+.wrong li{margin-bottom:10px;font-size:15px}
+.wrong li span{display:block;color:var(--mute);font-size:14px}
+.note{font-size:14px;color:var(--mute);margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.tbl{overflow-x:auto;margin-top:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.hist{font-size:13px;color:var(--mute);margin-top:4px}
+.weak{margin-top:20px}
+.weak li{margin-bottom:4px}
+.empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:12px;margin-top:12px}
+[hidden]{display:none!important}
+.code{margin-top:14px;padding:10px 12px;background:var(--bg);border:1px dashed var(--line);border-radius:8px;font-size:14px;word-break:break-word;user-select:all}
+@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Готовность к программе</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+  <nav>
+    <button id="nav-home" aria-current="true">Пройти тест</button>
+    
+  </nav>
+
+  <section id="home">
+    <p class="lead">Два теста перед программой: один проверяет знание критериев оказания услуг вашей роли, второй — программы. После каждого ответа видно правильный вариант и пояснение, так что тест заодно повторяет материал. Пересдавать можно сколько угодно; в сводку у управляющего попадает лучший результат.</p>
+    <label for="name">Как вас зовут</label>
+    <input type="text" id="name" placeholder="Имя и фамилия" autocomplete="name">
+    <label>Ваша роль</label>
+    <div class="seg" id="role"></div>
+    <label>Группа</label>
+    <div class="seg" id="group"></div>
+    <div class="tests">
+      <div class="test">
+        <h3>Критерии оказания услуг</h3>
+        <div class="n" id="reg-n"></div>
+        <p style="font-size:14px">Общие правила: безопасность, чаты и отчёты, питание, прогулки, атмосфера в команде — плюс зона вашей роли. Общие вопросы каждый раз выбираются случайно.</p>
+        <button class="btn" id="start-reg">Начать</button>
+      </div>
+      <div class="test">
+        <h3>Программа</h3>
+        <div class="n" id="prog-n"></div>
+        <p style="font-size:14px">Что происходит в каждый из пяти дней, как задания связаны между собой и что уносит ребёнок.</p>
+        <button class="btn" id="start-prog">Начать</button>
+      </div>
+    </div>
+    <p class="note" id="home-note"></p>
+    <div id="my-history"></div>
+  </section>
+
+  <section id="quiz" hidden>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="pos"><span id="pos"></span><span id="quiz-title"></span></div>
+    <div class="card" id="qcard"></div>
+    <div class="actions"><button class="btn ghost" id="quit">Прервать</button><button class="btn" id="next" disabled>Дальше</button></div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="card" id="rcard"></div>
+    <div class="actions"><button class="btn ghost" id="again">Пройти ещё раз</button><button class="btn" id="back">К тестам</button></div>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="questions.js"></script>
+<script>
+(function(){
+const Q = window.QUESTIONS;
+const ROLES = ["сопровождающий","куратор","сопровождающий-куратор"];
+const COMMON_N = 20; // общих вопросов в попытке; плюс 10 вопросов роли = 30
+const GROUPS = [["kids","Дети 7–12"],["teens","Подростки 13–16"]];
+const PASS = 85, RETAKE = 70;
+const $ = id => document.getElementById(id);
+
+let state = { role: ROLES[0], group: "kids", name: "" };
+try { const s = JSON.parse(localStorage.getItem("sl-test-profile")||"{}"); Object.assign(state, s); } catch(e){}
+if(!ROLES.includes(state.role)) state.role = ROLES[0];
+let run = null; // текущая попытка
+
+$("meta").textContent = Q.meta.shift + " · " + Q.meta.regulationVersion;
+$("name").value = state.name;
+
+function saveProfile(){ try{ localStorage.setItem("sl-test-profile", JSON.stringify({role:state.role,group:state.group,name:state.name})); }catch(e){} }
+function seg(el, items, cur, on){
+  el.innerHTML = "";
+  items.forEach(([v,l])=>{ const b=document.createElement("button"); b.type="button"; b.textContent=l; b.setAttribute("aria-pressed", String(v===cur)); b.onclick=()=>{on(v);}; el.appendChild(b); });
+}
+function renderHome(){
+  seg($("role"), ROLES.map(r=>[r,r[0].toUpperCase()+r.slice(1)]), state.role, v=>{state.role=v; saveProfile(); renderHome();});
+  seg($("group"), GROUPS, state.group, v=>{state.group=v; saveProfile(); renderHome();});
+  $("reg-n").textContent = (Math.min(COMMON_N,Q.regulation.common.length) + Q.regulation[state.role].length) + " вопросов · " + state.role;
+  const g = GROUPS.find(x=>x[0]===state.group)[1];
+  $("prog-n").textContent = Q.program[state.group].length + " вопросов · " + (state.group==="kids"?Q.meta.programKids:Q.meta.programTeens);
+}
+renderHome();
+$("name").addEventListener("input", e=>{ state.name = e.target.value.trim(); saveProfile(); });
+
+function show(id){ ["home","quiz","result"].forEach(s=>$(s).hidden = s!==id); window.scrollTo(0,0); }
+$("nav-home").onclick=()=>{ if(run && !confirmQuit()) return; show("home"); };
+function confirmQuit(){ run=null; return true; }
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildSet(test){
+  let src = test==="reg" ? shuffle(Q.regulation.common).slice(0,COMMON_N).concat(Q.regulation[state.role]) : Q.program[state.group];
+  return shuffle(src).map(q=>{ const idx = shuffle(q.a.map((_,i)=>i)); return { b:q.b, q:q.q, e:q.e, a: idx.map(i=>q.a[i]), c: idx.indexOf(q.c) }; });
+}
+function start(test){
+  if(!state.name){ $("name").focus(); $("home-note").textContent="Сначала напишите имя и фамилию — без них управляющий не поймёт, чей это результат."; return; }
+  $("home-note").textContent="";
+  run = { test, role: state.role, group: state.group, items: buildSet(test), i:0, answers:[], started: Date.now() };
+  $("quiz-title").textContent = test==="reg" ? "Критерии · "+state.role : "Программа · "+GROUPS.find(x=>x[0]===state.group)[1];
+  show("quiz"); renderQ();
+}
+$("start-reg").onclick=()=>start("reg");
+$("start-prog").onclick=()=>start("prog");
+$("quit").onclick=()=>{ run=null; show("home"); };
+
+function renderQ(){
+  const it = run.items[run.i], n = run.items.length;
+  $("bar").style.width = (run.i/n*100)+"%";
+  $("pos").textContent = "Вопрос "+(run.i+1)+" из "+n;
+  $("next").disabled = true;
+  $("next").textContent = run.i===n-1 ? "Результат" : "Дальше";
+  const card=$("qcard"); card.innerHTML="";
+  const bl=document.createElement("span"); bl.className="block"; bl.textContent=it.b; card.appendChild(bl);
+  const q=document.createElement("p"); q.className="q"; q.textContent=it.q; card.appendChild(q);
+  const opts=document.createElement("div"); opts.className="opts";
+  it.a.forEach((t,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="opt"; b.textContent=t; b.onclick=()=>answer(i); opts.appendChild(b); });
+  card.appendChild(opts);
+}
+function answer(i){
+  const it = run.items[run.i]; if(run.answers[run.i]!==undefined) return;
+  run.answers[run.i]=i;
+  const btns=[...$("qcard").querySelectorAll(".opt")];
+  btns.forEach((b,k)=>{ b.disabled=true; if(k===it.c) b.classList.add("right"); else if(k===i) b.classList.add("wrong"); });
+  const ex=document.createElement("div"); ex.className="explain";
+  const h=document.createElement("b"); h.textContent = i===it.c ? "Верно." : "Неверно."; ex.appendChild(h); ex.appendChild(document.createTextNode(it.e));
+  $("qcard").appendChild(ex);
+  $("next").disabled=false; $("next").focus();
+}
+$("next").onclick=()=>{ if(run.i<run.items.length-1){ run.i++; renderQ(); } else finish(); };
+
+function summarize(r){
+  const blocks={}; let score=0; const wrong=[];
+  r.items.forEach((it,k)=>{ const ok = r.answers[k]===it.c; blocks[it.b]=blocks[it.b]||[0,0]; blocks[it.b][1]++; if(ok){blocks[it.b][0]++; score++;} else wrong.push({q:it.q, right:it.a[it.c]}); });
+  return { test:r.test, role:r.role, group:r.group, score, total:r.items.length, pct: Math.round(score/r.items.length*100), blocks, wrong, ts: Date.now(), dur: Math.round((Date.now()-r.started)/1000) };
+}
+function verdict(p){ return p>=PASS ? ["Готов","v-ok"] : p>=RETAKE ? ["Доучить и пересдать","v-warn"] : ["Нужен разбор с управляющим","v-bad"]; }
+function testName(a){ return a.test==="reg" ? "Критерии · "+a.role : "Программа · "+(a.group==="kids"?"дети":"подростки"); }
+
+async function finish(){
+  const a = summarize(run); run=null;
+  const card=$("rcard"); card.innerHTML="";
+  const t=document.createElement("div"); t.className="block"; t.textContent=testName(a); card.appendChild(t);
+  const s=document.createElement("div"); s.className="score"; s.textContent=a.pct+"%"; card.appendChild(s);
+  const [vt,vc]=verdict(a.pct); const v=document.createElement("span"); v.className="verdict "+vc; v.textContent=vt; card.appendChild(v);
+  const p=document.createElement("p"); p.textContent=a.score+" из "+a.total+" правильных ответов, "+Math.floor(a.dur/60)+" мин "+(a.dur%60)+" с."; card.appendChild(p);
+  card.appendChild(blocksEl(a.blocks));
+  if(a.wrong.length){ const h=document.createElement("h2"); h.textContent="Что повторить"; card.appendChild(h); const ul=document.createElement("ul"); ul.className="wrong";
+    a.wrong.forEach(w=>{ const li=document.createElement("li"); li.textContent=w.q; const sp=document.createElement("span"); sp.textContent="Правильно: "+w.right; li.appendChild(sp); ul.appendChild(li); }); card.appendChild(ul); }
+  const note=document.createElement("p"); note.className="note"; note.textContent="Сохраняю результат…"; card.appendChild(note);
+  show("result");
+  const saved = await saveAttempt(a);
+  a.sent = !!saved.ok; pushHist(a);
+  note.textContent = saved.ok ? (saved.soft ? "Результат отправлен управляющему." : "Результат отправлен и виден управляющему в таблице.") : saved.msg;
+  const code=document.createElement("div"); code.className="code"; code.textContent=resultCode(a);
+  const cp=document.createElement("button"); cp.type="button"; cp.className="btn ghost"; cp.textContent="Скопировать результат";
+  cp.onclick=()=>{ const t=resultCode(a); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>cp.textContent="Скопировано",()=>{ const r=document.createRange(); r.selectNodeContents(code); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }); };
+  card.append(code,cp);
+  renderMyHistory();
+}
+function blocksEl(blocks){
+  const el=document.createElement("div"); el.className="blocks";
+  Object.entries(blocks).sort((x,y)=>x[1][0]/x[1][1]-y[1][0]/y[1][1]).forEach(([b,[ok,n]])=>{
+    const pct=Math.round(ok/n*100); const l=document.createElement("span"); l.textContent=b; const r=document.createElement("span"); r.className="pct"; r.textContent=ok+"/"+n;
+    const bar=document.createElement("div"); bar.className="bar"; const i=document.createElement("i"); i.style.width=pct+"%"; i.style.background= pct>=PASS?"var(--ok)":pct>=RETAKE?"var(--warn)":"var(--bad)"; bar.appendChild(i);
+    el.append(l,r,bar); });
+  return el;
+}
+$("again").onclick=()=>{ show("home"); };
+$("back").onclick=()=>show("home");
+
+// ---------- хранение: Google Таблица через Apps Script ----------
+const ENDPOINT = (window.CONFIG && window.CONFIG.endpoint) || "";
+function histKey(){ return "sl-test-history"; }
+function readHist(){ try{ return JSON.parse(localStorage.getItem(histKey())||"[]"); }catch(e){ return []; } }
+function pushHist(a){ try{ const h=readHist(); h.push({test:a.test,role:a.role,group:a.group,pct:a.pct,ts:a.ts,sent:a.sent}); localStorage.setItem(histKey(), JSON.stringify(h.slice(-20))); }catch(e){} }
+function resultCode(a){
+  const [vt]=verdict(a.pct);
+  return `${state.name} · ${testName(a)} · ${a.pct}% (${a.score}/${a.total}) · ${vt} · ${new Date(a.ts).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`;
+}
+async function saveAttempt(a){
+  const payload = { name: state.name, role: a.role, group: a.group, test: a.test, testName: testName(a), score: a.score, total: a.total, pct: a.pct, verdict: verdict(a.pct)[0], blocks: a.blocks, wrong: a.wrong.map(w=>w.q), dur: a.dur, ts: a.ts, ua: navigator.userAgent.slice(0,80) };
+  if(!ENDPOINT) return { ok:false, msg:"Отправка результатов ещё не настроена. Скопируйте строку ниже и пришлите управляющему." };
+  try{
+    const r = await fetch(ENDPOINT, { method:"POST", body: JSON.stringify(payload), redirect:"follow" });
+    const j = await r.json().catch(()=>({}));
+    if(r.ok && j && j.ok!==false) return { ok:true };
+    throw new Error("bad response");
+  }catch(e){
+    try{ await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: JSON.stringify(payload) }); return { ok:true, soft:true }; }
+    catch(e2){ return { ok:false, msg:"Не удалось отправить результат (нет сети?). Скопируйте строку ниже и пришлите управляющему." }; }
+  }
+}
+function renderMyHistory(){
+  const el=$("my-history"); el.innerHTML="";
+  const at=readHist().slice().reverse(); if(!at.length) return;
+  const h=document.createElement("h2"); h.textContent="Ваши попытки на этом устройстве"; el.appendChild(h);
+  const ul=document.createElement("ul"); ul.className="wrong"; at.slice(0,8).forEach(a=>{ const li=document.createElement("li"); const [vt]=verdict(a.pct); li.textContent=testName(a)+" — "+a.pct+"% · "+vt; const sp=document.createElement("span"); sp.textContent=new Date(a.ts).toLocaleString("ru-RU",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+(a.sent?"":" · не отправлено"); li.appendChild(sp); ul.appendChild(li); }); el.appendChild(ul);
+}
+
+// ---------- запуск ----------
+renderMyHistory();
+if(!ENDPOINT) $("home-note").textContent="Отправка результатов ещё не настроена: после теста скопируйте строку с результатом и пришлите управляющему.";
+})();
+</script>
+</body>
+</html>
