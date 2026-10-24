@@ -4,11 +4,18 @@
 
 var PASS = 85, RETAKE = 70;
 
+// КОДОВОЕ СЛОВО. Впишите своё прямо здесь, в редакторе Apps Script (в репозитории оно остаётся пустым).
+// Без него страница не открывается, а результаты без него не принимаются.
+// После изменения — Развернуть → Управление развёртываниями → карандаш → Версия: новая → Развернуть.
+var SECRET = "";
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var d = JSON.parse(e.postData.contents);
+    if (!SECRET || String(d.secret || "") !== SECRET) return out_({ ok: false, error: "bad_secret" });
+    if (d.action === "check") return out_({ ok: true });
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sh = sheet_(ss, "Попытки", ["Дата", "Имя", "Роль", "Группа", "Тест", "Баллы", "Из", "%", "Статус", "Минут", "Слабые блоки", "Ошибки", "Устройство"]);
     var blocks = Object.keys(d.blocks || {}).map(function (b) {
@@ -72,5 +79,5 @@ function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).set
 
 // Для проверки из редактора: Выполнить → testPost. Добавит тестовую строку.
 function testPost() {
-  doPost({ postData: { contents: JSON.stringify({ name: "Проверка Скрипта", role: "сопровождающий", group: "kids", test: "reg", testName: "Критерии · сопровождающий", score: 27, total: 30, pct: 90, blocks: { "Безопасность": [5, 6], "Чаты": [4, 4] }, wrong: ["Пример вопроса"], dur: 600, ts: Date.now() }) } });
+  doPost({ postData: { contents: JSON.stringify({ secret: SECRET, name: "Проверка Скрипта", role: "сопровождающий", group: "kids", test: "reg", testName: "Критерии · сопровождающий", score: 27, total: 30, pct: 90, blocks: { "Безопасность": [5, 6], "Чаты": [4, 4] }, wrong: ["Пример вопроса"], dur: 600, ts: Date.now() }) } });
 }

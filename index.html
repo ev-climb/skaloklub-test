@@ -86,12 +86,29 @@ th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute
 .weak li{margin-bottom:4px}
 .empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:12px;margin-top:12px}
 [hidden]{display:none!important}
+.gate{min-height:70vh;display:flex;flex-direction:column;justify-content:center;max-width:420px;margin:0 auto;gap:12px}
+.gate-title{font-family:var(--display);font-size:clamp(28px,6vw,40px);margin:0 0 8px;text-align:center}
+.gate form{display:flex;flex-direction:column;gap:10px}
+.gate input{font:inherit;font-size:18px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--fg);text-align:center;letter-spacing:.08em}
+.gate .btn{margin-top:0}
+.gate .note{text-align:center}
 .code{margin-top:14px;padding:10px 12px;background:var(--bg);border:1px dashed var(--line);border-radius:8px;font-size:14px;word-break:break-word;user-select:all}
 @media (prefers-reduced-motion:reduce){.progress i{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <section id="gate" hidden>
+    <div class="gate">
+      <h1 class="gate-title">Секрет</h1>
+      <form id="gate-form" autocomplete="off">
+        <input type="password" id="secret" placeholder="Кодовое слово из оргчата" autocomplete="off" autocapitalize="off">
+        <button class="btn" type="submit" id="gate-btn">Войти</button>
+      </form>
+      <p class="note" id="gate-note"></p>
+    </div>
+  </section>
+  <div id="app" hidden>
   <header>
     <h1>Готовность к программе</h1>
     <div class="meta" id="meta"></div>
@@ -269,11 +286,12 @@ function resultCode(a){
   return `${state.name} · ${testName(a)} · ${a.pct}% (${a.score}/${a.total}) · ${vt} · ${new Date(a.ts).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`;
 }
 async function saveAttempt(a){
-  const payload = { name: state.name, role: a.role, group: a.group, test: a.test, testName: testName(a), score: a.score, total: a.total, pct: a.pct, verdict: verdict(a.pct)[0], blocks: a.blocks, wrong: a.wrong.map(w=>w.q), dur: a.dur, ts: a.ts, ua: navigator.userAgent.slice(0,80) };
+  const payload = { secret: SECRET, name: state.name, role: a.role, group: a.group, test: a.test, testName: testName(a), score: a.score, total: a.total, pct: a.pct, verdict: verdict(a.pct)[0], blocks: a.blocks, wrong: a.wrong.map(w=>w.q), dur: a.dur, ts: a.ts, ua: navigator.userAgent.slice(0,80) };
   if(!ENDPOINT) return { ok:false, msg:"Отправка результатов ещё не настроена. Скопируйте строку ниже и пришлите управляющему." };
   try{
     const r = await fetch(ENDPOINT, { method:"POST", body: JSON.stringify(payload), redirect:"follow" });
     const j = await r.json().catch(()=>({}));
+    if(j && j.error==="bad_secret"){ forgetSecret(); return { ok:false, msg:"Кодовое слово изменилось. Обновите страницу, введите новое и пройдите тест ещё раз." }; }
     if(r.ok && j && j.ok!==false) return { ok:true };
     throw new Error("bad response");
   }catch(e){
@@ -288,9 +306,31 @@ function renderMyHistory(){
   const ul=document.createElement("ul"); ul.className="wrong"; at.slice(0,8).forEach(a=>{ const li=document.createElement("li"); const [vt]=verdict(a.pct); li.textContent=testName(a)+" — "+a.pct+"% · "+vt; const sp=document.createElement("span"); sp.textContent=new Date(a.ts).toLocaleString("ru-RU",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+(a.sent?"":" · не отправлено"); li.appendChild(sp); ul.appendChild(li); }); el.appendChild(ul);
 }
 
+// ---------- секрет ----------
+let SECRET = "";
+try{ SECRET = localStorage.getItem("sl-test-secret") || ""; }catch(e){}
+function forgetSecret(){ SECRET=""; try{ localStorage.removeItem("sl-test-secret"); }catch(e){} }
+async function checkSecret(sec){
+  const r = await fetch(ENDPOINT, { method:"POST", body: JSON.stringify({ action:"check", secret: sec }), redirect:"follow" });
+  const j = await r.json(); return !!(j && j.ok);
+}
+function openApp(){ $("gate").hidden=true; $("app").hidden=false; renderMyHistory(); }
+function openGate(msg){ $("app").hidden=true; $("gate").hidden=false; $("gate-note").textContent=msg||""; setTimeout(()=>$("secret").focus(),50); }
+$("gate-form").addEventListener("submit", async e=>{
+  e.preventDefault(); const sec=$("secret").value.trim(); if(!sec) return;
+  $("gate-btn").disabled=true; $("gate-note").textContent="Проверяю…";
+  try{ if(await checkSecret(sec)){ SECRET=sec; try{ localStorage.setItem("sl-test-secret",sec); }catch(e){} openApp(); } else { $("gate-note").textContent="Не подходит. Кодовое слово — в оргчате программы."; } }
+  catch(e){ $("gate-note").textContent="Нет связи с сервером. Проверьте интернет и попробуйте ещё раз."; }
+  $("gate-btn").disabled=false;
+});
+
 // ---------- запуск ----------
-renderMyHistory();
-if(!ENDPOINT) $("home-note").textContent="Отправка результатов ещё не настроена: после теста скопируйте строку с результатом и пришлите управляющему.";
+(async function(){
+  if(!ENDPOINT){ openApp(); $("home-note").textContent="Отправка результатов ещё не настроена: после теста скопируйте строку с результатом и пришлите управляющему."; return; }
+  if(!SECRET){ openGate(); return; }
+  try{ if(await checkSecret(SECRET)) openApp(); else { forgetSecret(); openGate("Кодовое слово изменилось — введите новое."); } }
+  catch(e){ openApp(); }
+})();
 })();
 </script>
 </body>
