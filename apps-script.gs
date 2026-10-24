@@ -14,7 +14,7 @@ function doPost(e) {
   lock.waitLock(10000);
   try {
     var d = JSON.parse(e.postData.contents);
-    if (!SECRET || String(d.secret || "") !== SECRET) return out_({ ok: false, error: "bad_secret" });
+    if (!norm_(SECRET) || norm_(d.secret) !== norm_(SECRET)) return out_({ ok: false, error: "bad_secret" });
     if (d.action === "check") return out_({ ok: true });
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sh = sheet_(ss, "Попытки", ["Дата", "Имя", "Роль", "Группа", "Тест", "Баллы", "Из", "%", "Статус", "Минут", "Слабые блоки", "Ошибки", "Устройство"]);
@@ -74,6 +74,7 @@ function sheet_(ss, name, header) {
   if (sh.getLastRow() === 0) { sh.appendRow(header); sh.setFrozenRows(1); sh.getRange(1, 1, 1, header.length).setFontWeight("bold"); }
   return sh;
 }
+function norm_(s) { return String(s || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " "); }
 function verdict_(p) { return p >= PASS ? "Готов" : p >= RETAKE ? "Доучить и пересдать" : "Нужен разбор с управляющим"; }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
